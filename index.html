@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Offers & Events</title>
+<style>
+body { font-family: Arial,sans-serif; background:#f4f4f4; margin:0; padding:0; }
+header { background:#ff5722; color:white; text-align:center; padding:20px; font-size:24px; font-weight:bold; position:sticky; top:0; z-index:10; }
+
+#controls { display:flex; justify-content:center; align-items:center; padding:10px; flex-wrap:wrap; gap:10px; background:#fff; box-shadow:0 2px 5px rgba(0,0,0,0.05); }
+#businessSearch, #countrySearch, #regionSearch { width:220px; padding:10px; font-size:14px; border-radius:5px; border:1px solid #ccc; }
+#globalView { margin-left:10px; }
+
+#topNav { display:flex; justify-content:center; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.1); position:sticky; top:72px; z-index:9; }
+#topNav button { flex:1; padding:15px 0; border:none; background:#fff; cursor:pointer; font-weight:bold; font-size:16px; transition:0.3s; }
+#topNav button.active { border-bottom:4px solid #ff5722; color:#ff5722; }
+
+section { padding:20px; max-width:1200px; margin:auto; display:none; }
+.cards-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:15px; }
+.card { background:white; border-radius:10px; box-shadow:0 3px 6px rgba(0,0,0,0.1); padding:10px; transition:0.3s; font-size:14px; position:relative; }
+.card:hover { transform:translateY(-3px); }
+
+.edit-btn, .delete-btn { position:absolute; top:10px; border:none; border-radius:5px; padding:5px 8px; cursor:pointer; font-size:12px; }
+.edit-btn { right:40px; background:#4CAF50; color:white; }
+.delete-btn { right:10px; background:#f44336; color:white; }
+
+#addBtn, #historyBtn { position:fixed; bottom:30px; right:30px; background:#4CAF50; color:white; border:none; border-radius:50%; width:60px; height:60px; font-size:36px; cursor:pointer; box-shadow:0 3px 6px rgba(0,0,0,0.3); z-index:5; }
+#historyBtn { right:100px; background:#2196f3; font-size:28px; }
+
+#formContainer, #historyContainer { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000; }
+#formPopup, #historyPopup { background:white; padding:30px; border-radius:10px; width:95%; max-width:800px; max-height:90vh; overflow-y:auto; position:relative; }
+#formPopup input, #formPopup textarea, #formPopup select { width:100%; padding:10px; margin-bottom:10px; font-size:14px; border-radius:5px; border:1px solid #ccc; }
+#formPopup textarea { resize:none; height:100px; }
+.closeBtn { position:absolute; top:10px; right:10px; background:#f44336; color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold; }
+#clearHistoryBtn { background:#f44336; color:white; border:none; padding:10px 15px; border-radius:5px; cursor:pointer; margin-bottom:15px; font-weight:bold; }
+
+.notice { font-size:13px; color:#666; margin-bottom:10px; font-style:italic; }
+
+/* How to Use Section Styling */
+#howToUseSection h2 { color:#ff5722; }
+#howToUseSection ul { line-height:1.6; margin-left:20px; }
+</style>
+</head>
+<body>
+
+<header>Global Offers & Events</header>
+
+<div id="controls">
+  <input type="text" id="businessSearch" placeholder="Search Business Enterprise">
+  <input type="text" id="countrySearch" placeholder="Country">
+  <input type="text" id="regionSearch" placeholder="State / District / Local Level">
+  <label><input type="checkbox" id="globalView"> Global View</label>
+</div>
+
+<div id="topNav">
+  <button class="active" onclick="showCategory('offers')">Offers</button>
+  <button onclick="showCategory('events')">Events</button>
+  <button onclick="showCategory('deals')">Deals & Coupons</button>
+  <button onclick="showCategory('howToUse')">How to Use</button>
+</div>
+
+<section id="offersSection"><div id="offersContainer" class="cards-container"></div></section>
+<section id="eventsSection"><div id="eventsContainer" class="cards-container"></div></section>
+<section id="dealsSection"><div id="dealsContainer" class="cards-container"></div></section>
+
+<!-- NEW How to Use Section -->
+<section id="howToUseSection">
+  <h2>How to Use Global Offers & Events</h2>
+  <ul>
+    <li>To <b>add a new entry</b>, click the green <b>(+)</b> button at the bottom-right corner.</li>
+    <li>Fill in details like <b>Title, Business Name, Location, Description, Dates, and Type</b>.</li>
+    <li>Click <b>Upload</b> to save. Your entry will show based on date validity.</li>
+    <li>Use <b>search filters</b> above to locate entries by business, country, or region.</li>
+    <li>Turn on <b>Global View</b> to show all entries regardless of location.</li>
+    <li>Use <b>"H" button</b> to view your full history of all entries.</li>
+    <li>You can <b>Edit</b> or <b>Delete</b> any entry from the displayed card.</li>
+    <li>Entries are stored locally in your browser using <b>localStorage</b>.</li>
+    <li>Future updates: image/video upload coming soon.</li>
+  </ul>
+</section>
+
+<button id="addBtn" title="Add Entry">+</button>
+<button id="historyBtn" title="View History">H</button>
+
+<!-- Form popup -->
+<div id="formContainer">
+  <div id="formPopup">
+    <button class="closeBtn" onclick="closeForm()">×</button>
+    <h3>Add / Edit Entry</h3>
+    <input type="text" id="entryTitle" placeholder="Title">
+    <input type="text" id="entryBusiness" placeholder="Business Name">
+    <input type="text" id="entryCountry" placeholder="Country">
+    <input type="text" id="entryRegion" placeholder="State / District / Local Level">
+    <textarea id="entryDescription" placeholder="Description"></textarea>
+    <p class="notice">📌 File upload features will come soon (images & videos currently disabled).</p>
+    <label>Start Date:</label>
+    <input type="date" id="entryStart">
+    <label>End Date:</label>
+    <input type="date" id="entryEnd">
+    <select id="entryType">
+      <option value="offer">Offer</option>
+      <option value="event">Event</option>
+      <option value="deal">Deal</option>
+    </select>
+    <button onclick="saveEntry()">Upload</button>
+  </div>
+</div>
+
+<!-- History popup -->
+<div id="historyContainer">
+  <div id="historyPopup">
+    <button class="closeBtn" onclick="closeHistory()">×</button>
+    <h3>History</h3>
+    <button id="clearHistoryBtn" onclick="clearHistory()">Clear History</button>
+    <div id="historyList" class="cards-container"></div>
+  </div>
+</div>
+
+<script>
+let entries = JSON.parse(localStorage.getItem('entries')) || [];
+let editIndex = null;
+
+function displayEntries() {
+  const today = new Date().toISOString().split('T')[0];
+  const containers = {
+    offers: document.getElementById('offersContainer'),
+    events: document.getElementById('eventsContainer'),
+    deals: document.getElementById('dealsContainer')
+  };
+  Object.values(containers).forEach(c => c.innerHTML = "");
+
+  const filters = {
+    business: document.getElementById('businessSearch').value.toLowerCase(),
+    country: document.getElementById('countrySearch').value.toLowerCase(),
+    region: document.getElementById('regionSearch').value.toLowerCase(),
+    global: document.getElementById('globalView').checked
+  };
+
+  [...entries].reverse().forEach((e,indexRev)=>{
+    const index = entries.length-1-indexRev;
+    if(today>=e.startDate && today<=e.endDate &&
+       (filters.global ||
+        (e.country?.toLowerCase().includes(filters.country) &&
+         e.region?.toLowerCase().includes(filters.region))) &&
+       (!filters.business || e.businessName.toLowerCase().includes(filters.business))){
+
+      const div = document.createElement('div');
+      div.className='card';
+      div.innerHTML = `
+        <h4>${e.title}</h4>
+        <p><strong>Business:</strong> ${e.businessName}</p>
+        <p><strong>Location:</strong> ${e.country}, ${e.region}</p>
+        <p><strong>Start:</strong> ${e.startDate}</p>
+        <p><strong>End:</strong> ${e.endDate}</p>
+        <p>${e.description || ''}</p>
+        <button class="edit-btn" onclick="editEntry(${index})">Edit</button>
+        <button class="delete-btn" onclick="deleteEntry(${index})">Delete</button>
+      `;
+      if(e.type==='offer') containers.offers.appendChild(div);
+      else if(e.type==='event') containers.events.appendChild(div);
+      else containers.deals.appendChild(div);
+    }
+  });
+}
+
+// Show selected tab
+function showCategory(cat){
+  document.querySelectorAll('#topNav button').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`#topNav button[onclick="showCategory('${cat}')"]`).classList.add('active');
+  ['offers','events','deals','howToUse'].forEach(id=>document.getElementById(id+'Section').style.display='none');
+  document.getElementById(cat+'Section').style.display='block';
+}
+
+function openForm(){ document.getElementById('formContainer').style.display='flex'; }
+function closeForm(){
+  document.getElementById('formContainer').style.display='none';
+  editIndex=null;
+  document.querySelectorAll('#formPopup input, #formPopup textarea').forEach(i=>i.value='');
+}
+
+function openHistory(){ document.getElementById('historyContainer').style.display='flex'; renderHistory(); }
+function closeHistory(){ document.getElementById('historyContainer').style.display='none'; }
+
+function renderHistory(){
+  const list = document.getElementById('historyList'); list.innerHTML='';
+  [...entries].reverse().forEach((e,indexRev)=>{
+    const index = entries.length-1-indexRev;
+    const div = document.createElement('div');
+    div.className='card';
+    div.innerHTML = `
+      <h4>${e.title}</h4>
+      <p><strong>Business:</strong> ${e.businessName}</p>
+      <p><strong>Location:</strong> ${e.country}, ${e.region}</p>
+      <p><strong>Start:</strong> ${e.startDate}</p>
+      <p><strong>End:</strong> ${e.endDate}</p>
+      <p>${e.description || ''}</p>
+      <button class="edit-btn" onclick="editEntry(${index})">Edit</button>
+      <button class="delete-btn" onclick="deleteEntry(${index})">Delete</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function saveEntry(){
+  const entryData = {
+    title: document.getElementById('entryTitle').value,
+    businessName: document.getElementById('entryBusiness').value,
+    country: document.getElementById('entryCountry').value,
+    region: document.getElementById('entryRegion').value,
+    description: document.getElementById('entryDescription').value,
+    startDate: document.getElementById('entryStart').value,
+    endDate: document.getElementById('entryEnd').value,
+    type: document.getElementById('entryType').value
+  };
+  if(editIndex!==null) entries[editIndex]=entryData;
+  else entries.push(entryData);
+  localStorage.setItem('entries', JSON.stringify(entries));
+  closeForm();
+  displayEntries();
+  renderHistory();
+}
+
+function editEntry(index){
+  editIndex=index;
+  const e=entries[index];
+  document.getElementById('entryTitle').value=e.title;
+  document.getElementById('entryBusiness').value=e.businessName;
+  document.getElementById('entryCountry').value=e.country;
+  document.getElementById('entryRegion').value=e.region;
+  document.getElementById('entryDescription').value=e.description;
+  document.getElementById('entryStart').value=e.startDate;
+  document.getElementById('entryEnd').value=e.endDate;
+  document.getElementById('entryType').value=e.type;
+  openForm();
+}
+
+function deleteEntry(index){
+  if(confirm('Are you sure you want to delete this entry?')){
+    entries.splice(index,1);
+    localStorage.setItem('entries', JSON.stringify(entries));
+    displayEntries();
+    renderHistory();
+  }
+}
+
+function clearHistory(){
+  if(confirm('Are you sure you want to clear all history?')){
+    entries=[];
+    localStorage.removeItem('entries');
+    displayEntries();
+    renderHistory();
+  }
+}
+
+document.getElementById('addBtn').addEventListener('click', openForm);
+document.getElementById('historyBtn').addEventListener('click', openHistory);
+document.querySelectorAll('#controls input').forEach(el=>el.addEventListener('input',displayEntries));
+document.getElementById('globalView').addEventListener('change',displayEntries);
+
+// Initial load
+showCategory('offers');
+displayEntries();
+</script>
+</body>
+</html>
